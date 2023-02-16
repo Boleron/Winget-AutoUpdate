@@ -1,0 +1,26 @@
+# Name of the UltraVNC app to be installed with Winget
+$App = "uvncbvba.UltraVnc"
+
+# Stop the UltraVNC service if it's running
+Stop-Service -Name "uvnc_service" -Force
+
+# Uninstall the previous version of UltraVNC, if any
+Uninstall-ModsApp $App
+
+# Install the latest version of UltraVNC with Winget
+winget install $App -e
+
+# Wait for the UltraVNC processes to end
+Wait-ModsProc -Wait "winvnc.exe","vncviewer.exe"
+
+# Save the current UltraVNC configuration to a file
+& "C:\Program Files\uvnc bvba\UltraVNC\winvnc.exe" -saveinf:"C:\Program Files\uvnc bvba\UltraVNC\ultravnc.ini"
+
+# Install UltraVNC as a service with the saved configuration
+& "C:\Program Files\uvnc bvba\UltraVNC\winvnc.exe" -install -service -config:"C:\Program Files\uvnc bvba\UltraVNC\ultravnc.ini" -silent
+
+# Start the UltraVNC service
+Start-Service -Name "uvnc_service"
+
+
+https://chat.openai.com/chat/ce2babbf-d2cf-4873-821c-c9588dd7d508
