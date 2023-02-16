@@ -1,0 +1,45 @@
+# Name of the app to silently uninstall (MSI/NSIS/INNO/EXE with defined silent uninstall in registry)
+# Use wildcard (*) to match any name that starts with the specified string
+$UninstallAppName = @("UltraVn*")
+
+# Name of the app to install from the WinGet repository
+# Use app ID obtained from the WinGet repository
+$InstallAppID = "uvncbvba.UltraVnc"
+
+# Name of the process to wait for to end after uninstalling the app - optional wildcard (*) after, without .exe
+# Use wildcard (*) to match any process that starts with the specified string
+$WaitProcessName = @("VNC*", "ultra*", "uvn*", "msiexec*")
+
+# Name of the process to kill after saving the configuration
+# Use wildcard (*) to match any process that starts with the specified string
+$KillProcessName = "winvnc"
+
+# Location to save the configuration file
+$ConfigFilePath = "$env:ProgramFiles\uvnc bvba\UltraVNC\uvnc_settings.txt"
+
+# Stop and kill the UltraVNC process if it is running
+Stop-Process -Name $KillProcessName -Force -ErrorAction SilentlyContinue
+
+# Save the current configuration of UltraVNC to a file
+if (Test-Path $ConfigFilePath) {
+    Remove-Item $ConfigFilePath -Force
+}
+& "C:\Program Files\uvnc bvba\UltraVNC\uvnc_settings.exe" /save $ConfigFilePath
+
+# Uninstall the old version of UltraVNC
+$UninstallString = Get-UninstallString -DisplayName $UninstallAppName
+if ($UninstallString) {
+    Uninstall-App -UninstallString $UninstallString -Wait -PassThru
+}
+
+# Wait for the specified processes to end
+Wait-Process -Name $WaitProcessName -ErrorAction SilentlyContinue
+
+# Install the new version of UltraVNC from the WinGet repository
+Install-App -AppId $InstallAppID -PassThru
+
+# Restore the saved configuration of UltraVNC
+& "C:\Program Files\uvnc bvba\UltraVNC\uvnc_settings.exe" /load $ConfigFilePath
+
+# Install UltraVNC as a service
+& "C:\Program Files\uvnc bvba\UltraVNC\uvnc_settings.exe" /install
